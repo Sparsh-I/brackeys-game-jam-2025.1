@@ -4,5 +4,6 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
-    public Vector2Int size = Vector2Int.one;
+    public int width;
+    public int height;
 }
