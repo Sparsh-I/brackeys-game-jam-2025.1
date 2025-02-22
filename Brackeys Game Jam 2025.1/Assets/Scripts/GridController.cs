@@ -26,6 +26,7 @@ public class GridController : MonoBehaviour
         _grid = new Item[gridWidth, gridHeight];
         UpdateCursorPosition();
         SpawnItems();
+        ScoreManager.Instance.AddScore(0);
     }
 
     // Update is called once per frame
@@ -41,8 +42,34 @@ public class GridController : MonoBehaviour
         if (IsRowEmpty(spawnRow)) SpawnItems();
 
         if (validPos) highlight.gameObject.SetActive(_heldItem);
+
+        if (IsGridFull(0, 3))
+        {
+            ScoreManager.Instance.AddScore(1000);
+            ClearEntireGrid();
+        }
     }
 
+    private bool IsGridFull(int startRow, int endRow)
+    {
+        for (int row = startRow; row <= endRow; row++)
+            for (int x = 0; x < gridWidth; x++)
+                if (!_grid[x, row]) return false; // If any cell is empty, rows are not full
+        
+        return true; // All rows in the range are full
+    }
+
+    private void ClearEntireGrid()
+    {
+        for (int x = 0; x < gridWidth; x++)
+            for (int y = 0; y < gridHeight; y++)
+                if (_grid[x, y])
+                {
+                    Destroy(_grid[x, y].gameObject);
+                    _grid[x, y] = null;
+                }
+    }
+    
     private bool IsRowEmpty(int row)
     {
         for (int x = 0; x < gridWidth; x++)
@@ -59,18 +86,15 @@ public class GridController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.D)) move.x = 1;
         
         Vector2Int newPos = _cursorPos + move;
-        if (_cursorPos.y < spawnRow - 1)
+        // Check if the item would fit in the new position
+        if (_heldItem)
         {
-            // Check if the item would fit in the new position
-            if (_heldItem)
-            {
-                // Check if the new position can accommodate the size of the held item
-                if (move.x != 0) newPos.x = Mathf.Clamp(newPos.x, 0, gridWidth - _heldItem.size.x);
-                if (move.y != 0) newPos.y = Mathf.Clamp(newPos.y, 0, gridHeight - _heldItem.size.y);
-            }
+            // Check if the new position can accommodate the size of the held item
+            if (move.x != 0) newPos.x = Mathf.Clamp(newPos.x, 0, gridWidth - _heldItem.size.x);
+            if (move.y != 0) newPos.y = Mathf.Clamp(newPos.y, 0, gridHeight - _heldItem.size.y);
         }
 
-        if (IsInsideGrid(newPos) && (!_heldItem || CanPlaceItem(_heldItem, newPos)))
+        if ((IsInsideGrid(newPos) && (!_heldItem || CanPlaceItem(_heldItem, newPos))) || _cursorPos.y >= spawnRow - 1)
         {
             _cursorPos = newPos;
             UpdateCursorPosition();
@@ -93,9 +117,6 @@ public class GridController : MonoBehaviour
 
                 // Update the position of the highlight to align with the top-left of the item
                 highlight.position = cursor.position + new Vector3(offsetX, 0-offsetY, 0);
-
-                // Set the scale of the highlight to match the item's size
-                // highlight.localScale = new Vector3(itemWidth, itemHeight, 1);
             }
             else
             {
@@ -103,45 +124,6 @@ public class GridController : MonoBehaviour
                 highlight.localScale = Vector3.zero;
             }
         }
-    }
-
-    private void MoveItem(Vector2Int newPos)
-    {
-        // Clear the old position from the grid
-        if (_heldItem)
-            foreach (var oldCell in _heldItem.occupiedCells)
-                if (IsInsideGrid(oldCell)) _grid[oldCell.x, oldCell.y] = null; // Mark as unoccupied
-
-        // Update the held item's position and occupied cells
-        _heldItem.SetPosition(newPos);
-        UpdateOccupiedCells(newPos);
-
-        // Mark the new position as occupied
-        foreach (var newCell in _heldItem.occupiedCells)
-            if (IsInsideGrid(newCell)) _grid[newCell.x, newCell.y] = _heldItem; // Mark as occupied
-    }
-
-    private void UpdateOccupiedCells(Vector2Int newPos)
-    {
-        // Update the occupiedCells based on the new position
-        _heldItem.occupiedCells = _heldItem.shape.Select(cell => new Vector2Int(cell.x + newPos.x, cell.y + newPos.y)).ToArray();
-    }
-    
-    private bool CanMove(Item item, Vector2Int cursorPos)
-    {
-        // Iterate through the occupied cells of the item
-        foreach (var cell in item.occupiedCells)
-        {
-            // Calculate the target position for this cell based on the cursor's position
-            Vector2Int targetCell = cursorPos + cell;
-
-            // Check if the target cell is outside the grid boundaries
-            if (targetCell.x < 0 || targetCell.x >= gridWidth ||
-                targetCell.y < 0 || targetCell.y >= gridHeight) return false;
-        }
-
-        // If no conflicts were found, the item can be placed
-        return true;
     }
     
     private bool CanPlaceItem(Item item, Vector2Int newPos)
