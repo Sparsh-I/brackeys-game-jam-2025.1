@@ -19,7 +19,7 @@ An endless block puzzle game, where you try to score as high as possible by pack
 
 ![title](https://github.com/user-attachments/assets/381d3416-7b16-40e3-82b6-21a32fe89585)
 
---
+---
 
 ### **Features**:
 - Minimalistic design and simple controls.  
