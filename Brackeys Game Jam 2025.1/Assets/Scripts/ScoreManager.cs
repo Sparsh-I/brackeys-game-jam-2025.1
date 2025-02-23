@@ -24,11 +24,12 @@ public class ScoreManager : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (scoreText) scoreText.text = _score.ToString();
+        if (scoreText) scoreText.text = GetScore().ToString();
     }
 
     public int GetScore()
     {
+        if (_score < 0) _score = 0;
         return _score;
     }
 }

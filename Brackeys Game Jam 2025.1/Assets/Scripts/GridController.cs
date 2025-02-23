@@ -37,7 +37,7 @@ public class GridController : MonoBehaviour
                         !((_cursorPos.x % 2 == 1 | _cursorPos.x == 6) 
                           & _cursorPos.y == 5);
         HandleMovement();
-        if (Input.GetKeyDown(KeyCode.Return) & validPos) HandleItemPickupPlacement();
+        if (Input.GetKeyDown(KeyCode.K) & validPos) HandleItemPickupPlacement();
         
         if (IsRowEmpty(spawnRow)) SpawnItems();
 
@@ -243,6 +243,17 @@ public class GridController : MonoBehaviour
             newItem.transform.localScale = new Vector3(0.5f, 0.5f, 1);
             _grid[i, spawnRow] = newItem.GetComponent<Item>();
         }
+    }
+
+    public void RerollItems()
+    {
+        for (int x = 0; x < gridWidth; x++)
+            if (_grid[x, spawnRow])
+            {
+                Destroy(_grid[x, spawnRow].gameObject);
+                _grid[x, spawnRow] = null;
+            }
+        ScoreManager.Instance.AddScore(-300);
     }
     
     private Vector3 GridToWorldPosition(int x, int y)
